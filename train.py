@@ -29,6 +29,7 @@ from utils.mpi_utils import *
 from utils.mlp import *
 from utils.colmap_runner import colmapGenPoses
 
+
 parser = argparse.ArgumentParser()
 
 #training schedule
