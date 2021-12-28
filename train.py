@@ -537,7 +537,9 @@ def train():
 
   dpath = args.scene
 
+  #加载数据集
   dataset = loadDataset(dpath)
+
   sampler_train, sampler_val, dataloader_train, dataloader_val = prepareDataloaders(
     dataset,
     dpath,
@@ -548,6 +550,8 @@ def train():
 
   mpi_h = int(dataset.sfm.ref_cam['height'] + dataset.sfm.offset * 2)
   mpi_w = int(dataset.sfm.ref_cam['width'] + dataset.sfm.offset * 2)
+
+  #定义网络
   model = Network((args.layers,
                  4,
                  mpi_h,

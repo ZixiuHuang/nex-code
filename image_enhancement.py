@@ -113,12 +113,9 @@ def maxEntropyEnhance(I, isBad, a=-0.3293, b=1.1258):
     return J
 
 
-def CAIP(img):
+def CAIP(img, mu=0.5, a=-0.3293, b=1.1258):
     lamda = 0.5
     sigma = 5
-    mu = 0.5
-    a = -0.3293
-    b = 1.1258
 
     I = cv2.normalize(img.astype('float64'), None, 0.0, 1.0, cv2.NORM_MINMAX)
 
@@ -151,6 +148,7 @@ def imageEnhancement(args):
         for file_name in files:
             img_path = os.path.join(args.image_dir, file_name)
             img = imageio.imread(img_path)
+            print("improving " + file_name + "...")
             # 图片增强
             img = CAIP(img)
             # 图片resize
@@ -160,12 +158,13 @@ def imageEnhancement(args):
                 height = int(img.shape[0] * scale_percent / 100)
                 dim = (width, height)
                 img = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            cv2.imwrite("./improved_images/"+file_name, img)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            cv2.imwrite(os.path.join(args.out_dir, file_name), img)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-image_dir', type=str, default="./images/", help='directory to the images')
+    parser.add_argument('-out_dir', type=str, default="./improved_images/", help='directory to the output images')
     parser.add_argument('-resize', type=int, default=100, help='resize images to x% of original size')
     args = parser.parse_args()
     imageEnhancement(args)
