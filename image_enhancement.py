@@ -153,15 +153,15 @@ def imageEnhancement(args):
             img = imageio.imread(img_path)
             # 图片增强
             img = CAIP(img)
-
-            #图片resize
-            scale_percent = args.resize_ratio
-            width = int(img.shape[1] * scale_percent / 100)
-            height = int(img.shape[0] * scale_percent / 100)
-            dim = (width, height)
-            resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
-            resized = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
-            cv2.imwrite(img_path, resized)
+            # 图片resize
+            if args.resize > 0 and args.resize <100:
+                scale_percent = args.resize
+                width = int(img.shape[1] * scale_percent / 100)
+                height = int(img.shape[0] * scale_percent / 100)
+                dim = (width, height)
+                img = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            cv2.imwrite("./improved_images/"+file_name, img)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
