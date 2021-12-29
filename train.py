@@ -281,7 +281,7 @@ class Network(nn.Module):
     self.mpi_c = nn.Parameter(mpi_c)
     self.specular = Basis(shape, args.basis_out * 3).cuda()
     self.seq1 = nn.DataParallel(
-      VanillaMLP(
+      SirenMLP(
         args.mlp, #默认：4
         args.hidden, #默认：384
         args.pos_level, #默认：10
