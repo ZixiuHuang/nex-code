@@ -1,4 +1,3 @@
-
 import math
 import numpy as np
 
@@ -11,7 +10,7 @@ import torch
 
 
 class Sine(nn.Module):
-    def __init__(self, w0):
+    def __init__(self, w0=30.):
         super().__init__()
         self.w0 = w0
 
@@ -47,7 +46,5 @@ if __name__ == "__main__":
     layer = SirenLayer(128, 111)
     x = torch.randn([7, 8, 128])
     y = layer(x)
-    print(x)
-    print(y)
     print(x.shape)
     print(y.shape)
