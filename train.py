@@ -202,16 +202,16 @@ class Basis(nn.Module):
   def __init__(self, shape, out_view):
     super().__init__()
     #choosing illumination model
-    self.order = args.basis_order
+    self.order = args.basis_order #默认：3
 
     # network for learn basis
     self.seq_basis = nn.DataParallel(
       ReluMLP(
-        args.basis_mlp, #basis_mlp
-        args.basis_hidden, #basis_hidden
-        self.order * 4,
+        args.basis_mlp, # 默认：1
+        args.basis_hidden, # 默认：64
+        self.order * 4, # 默认：12
         args.lrelu_slope,
-        out_node = args.basis_out, #basis_out
+        out_node = args.basis_out, # 默认：8
       )
     )
     print('Basis Network:',self.seq_basis)
@@ -282,10 +282,10 @@ class Network(nn.Module):
     self.specular = Basis(shape, args.basis_out * 3).cuda()
     self.seq1 = nn.DataParallel(
       VanillaMLP(
-        args.mlp,
-        args.hidden,
-        args.pos_level,
-        args.depth_level,
+        args.mlp, #默认：4
+        args.hidden, #默认：384
+        args.pos_level, #默认：10
+        args.depth_level, #默认： 8
         args.lrelu_slope,
         out_node = 1 + args.basis_out * 3,
         first_gpu = mlp_first_device
