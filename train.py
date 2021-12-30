@@ -37,7 +37,7 @@ parser.add_argument('-epochs', type=int, default=4000, help='total epochs to tra
 parser.add_argument('-tb_saveimage', type=int, default=50, help='write an output image to tensorboard for every <tb_saveimage> epochs')
 parser.add_argument('-tb_savempi', type=int, default=200, help='generate MPI (WebGL) and measure PSNR/SSIM of validation image for every <tb_savempi> epochs')
 parser.add_argument('-checkpoint', type=int, default=100, help='save checkpoint for every <checkpoint> epochs. Be aware that! It will replace the previous checkpoint.')
-parser.add_argument('-vstep',type=int, default=200, help="print output to terminal for every vstep epochs")
+parser.add_argument('-vstep',type=int, default=50, help="print output to terminal for every vstep epochs")
 
 #lr schedule
 parser.add_argument('-lrc', type=float, default=10, help='the number of times of lr using for learning rate of explicit basis (k0).')
@@ -48,7 +48,7 @@ parser.add_argument('-decay_rate', type=float, default=0.1, help='ratio of decay
 #network (First MLP)
 parser.add_argument('-ray', type=int, default=8000, help='the number of sampled ray that is used to train in each step')
 parser.add_argument('-hidden_node', type=int, default=384, help='the number of hidden node of the main MLP')
-parser.add_argument('-hidden_layer', type=int, default=6, help='the number of hidden layer of the main MLP')
+parser.add_argument('-hidden_layer', type=int, default=4, help='the number of hidden layer of the main MLP')
 parser.add_argument('-mlp_type', type=str, default="relu", help='the activation function of the MLP')
 parser.add_argument('-pos_level', type=int, default=10, help='the number of positional encoding in terms of image size. We recommend to set 2^(pos_level) > image_height and image_width')
 parser.add_argument('-depth_level', type=int, default=8,help='the number of positional encoding in terms number of plane. We recommend to set 2^(depth_level) > layers * subplayers')
@@ -57,7 +57,7 @@ parser.add_argument('-sigmoid_offset', type=float, default=5, help='sigmoid offs
 
 #basis (Second MLP)
 parser.add_argument('-basis_hidden_node', type=int, default=64, help='the number of hidden node in the learned basis MLP')
-parser.add_argument('-basis_hidden_layer', type=int, default=3, help='the number of hidden layer in the learned basis MLP')
+parser.add_argument('-basis_hidden_layer', type=int, default=1, help='the number of hidden layer in the learned basis MLP')
 parser.add_argument('-basis_order', type=int, default=3, help='the number of  positional encoding in terms of viewing angle')
 parser.add_argument('-basis_out', type=int, default=8, help='the number of coeffcient output (N in equation 3 under seftion 3.1)')
 
@@ -280,7 +280,7 @@ class Network(nn.Module):
     mpi_c = pt.empty((shape[0], 3, shape[2], shape[3]), device='cuda:0').uniform_(-1, 1)
     self.mpi_c = nn.Parameter(mpi_c)
     self.specular = Basis(shape, args.basis_out * 3).cuda()
-    self.MLP = SirenMLP if (args.MLP=="siren") else VanillaMLP
+    self.MLP = SirenMLP if (args.mlp_type=="siren") else VanillaMLP
     self.seq1 = nn.DataParallel(
       self.MLP(
         args.hidden_layer, #默认：6
