@@ -34,11 +34,10 @@ parser = argparse.ArgumentParser()
 
 #training schedule
 parser.add_argument('-epochs', type=int, default=4000, help='total epochs to train')
-parser.add_argument('-steps', type=int, default=-1, help='total steps to train. In our paper, we proposed to use epoch instead.')
 parser.add_argument('-tb_saveimage', type=int, default=50, help='write an output image to tensorboard for every <tb_saveimage> epochs')
 parser.add_argument('-tb_savempi', type=int, default=200, help='generate MPI (WebGL) and measure PSNR/SSIM of validation image for every <tb_savempi> epochs')
 parser.add_argument('-checkpoint', type=int, default=100, help='save checkpoint for every <checkpoint> epochs. Be aware that! It will replace the previous checkpoint.')
-parser.add_argument('-tb_toc',type=int, default=500, help="print output to terminal for every tb_toc epochs")
+parser.add_argument('-vstep',type=int, default=200, help="print output to terminal for every vstep epochs")
 
 #lr schedule
 parser.add_argument('-lrc', type=float, default=10, help='the number of times of lr using for learning rate of explicit basis (k0).')
@@ -48,16 +47,17 @@ parser.add_argument('-decay_rate', type=float, default=0.1, help='ratio of decay
 
 #network (First MLP)
 parser.add_argument('-ray', type=int, default=8000, help='the number of sampled ray that is used to train in each step')
-parser.add_argument('-hidden', type=int, default=384, help='the number of hidden node of the main MLP')
-parser.add_argument('-mlp', type=int, default=4, help='the number of hidden layer of the main MLP')
+parser.add_argument('-hidden_node', type=int, default=384, help='the number of hidden node of the main MLP')
+parser.add_argument('-hidden_layer', type=int, default=6, help='the number of hidden layer of the main MLP')
+parser.add_argument('-mlp_type', type=str, default="relu", help='the activation function of the MLP')
 parser.add_argument('-pos_level', type=int, default=10, help='the number of positional encoding in terms of image size. We recommend to set 2^(pos_level) > image_height and image_width')
 parser.add_argument('-depth_level', type=int, default=8,help='the number of positional encoding in terms number of plane. We recommend to set 2^(depth_level) > layers * subplayers')
 parser.add_argument('-lrelu_slope', type=float, default=0.01, help='slope of leaky relu')
 parser.add_argument('-sigmoid_offset', type=float, default=5, help='sigmoid offset that is applied to alpha before sigmoid')
 
 #basis (Second MLP)
-parser.add_argument('-basis_hidden', type=int, default=64, help='the number of hidden node in the learned basis MLP')
-parser.add_argument('-basis_mlp', type=int, default=1, help='the number of hidden layer in the learned basis MLP')
+parser.add_argument('-basis_hidden_node', type=int, default=64, help='the number of hidden node in the learned basis MLP')
+parser.add_argument('-basis_hidden_layer', type=int, default=3, help='the number of hidden layer in the learned basis MLP')
 parser.add_argument('-basis_order', type=int, default=3, help='the number of  positional encoding in terms of viewing angle')
 parser.add_argument('-basis_out', type=int, default=8, help='the number of coeffcient output (N in equation 3 under seftion 3.1)')
 
@@ -74,7 +74,7 @@ parser.add_argument('-invz', action='store_true', help='place MPI with inverse d
 parser.add_argument('-scale', type=float, default=-1, help='scale the MPI size')
 parser.add_argument('-llff_width', type=int, default=1008, help='if input dataset is LLFF it will resize the image to <llff_width>')
 parser.add_argument('-deepview_width', type=int, default=800, help='if input dataset is deepview dataset, it will resize the image to <deepview_width>')
-parser.add_argument('-train_ratio', type=float, default=0.875, help='ratio to split number of train/test (in case dataset doesn\'t specify how to split)')
+parser.add_argument('-train_ratio', type=float, default=0.9, help='ratio to split number of train/test (in case dataset doesn\'t specify how to split)')
 parser.add_argument('-random_split', action='store_true', help='random split the train/test set. (in case dataset doesn\'t specify how to split)')
 parser.add_argument('-num_workers', type=int, default=8, help='number of pytorch\'s dataloader worker')
 parser.add_argument('-cv2resize', action='store_true', help='apply cv2.resize instead of skimage.transform.resize to match the score in our paper (see note in github readme for more detail) ')
@@ -85,15 +85,15 @@ parser.add_argument('-layers', type=int, default=16, help='the number of plane t
 parser.add_argument('-sublayers', type=int, default=12, help='the number of plane that share the same texture. (please refer to coefficient sharing under section 3.4 in the paper)')
 
 #predict
-parser.add_argument('-no_eval', action='store_true', help='do not measurement the score (PSNR/SSIM/LPIPS) ')
-parser.add_argument('-no_csv', action='store_true', help="do not write CSV on evaluation")
-parser.add_argument('-no_video', action='store_true', help="do not write the video on prediction")
-parser.add_argument('-no_webgl', action='store_true', help='do not predict webgl (realtime demo) related content.')
+parser.add_argument('-no_eval', default="False", help='do not measurement the score (PSNR/SSIM/LPIPS) ')
+parser.add_argument('-no_csv', default="False", help="do not write CSV on evaluation")
+parser.add_argument('-no_video', default="False", help="do not write the video on prediction")
+parser.add_argument('-no_webgl', default="True", help='do not predict webgl (realtime demo) related content.')
 parser.add_argument('-predict', action='store_true', help='predict validation images')
 parser.add_argument('-eval_path', type=str, default='runs/evaluation/', help='path to save validation image')
 parser.add_argument('-web_path', type=str, default='runs/html/', help='path to output real time demo')
 parser.add_argument('-web_width', type=int, default=16000, help='max texture size (pixel) of realtime demo. WebGL on Highend PC is support up to 16384px, while mobile phone support only 4096px')
-parser.add_argument('-http', action='store_true', help='serve real-time demo on http server')
+parser.add_argument('-http', default='False', help='serve real-time demo on http server')
 parser.add_argument('-render_viewing', action='store_true', help='genereate view-dependent-effect video')
 parser.add_argument('-render_nearest', action='store_true', help='genereate nearest input video')
 parser.add_argument('-render_depth', action='store_true', help='generate depth')
@@ -207,8 +207,8 @@ class Basis(nn.Module):
     # network for learn basis
     self.seq_basis = nn.DataParallel(
       ReluMLP(
-        args.basis_mlp, # 默认：1
-        args.basis_hidden, # 默认：64
+        args.basis_hidden_layer, # 默认：1
+        args.basis_hidden_node, # 默认：64
         self.order * 4, # 默认：12
         args.lrelu_slope,
         out_node = args.basis_out, # 默认：8
@@ -280,10 +280,11 @@ class Network(nn.Module):
     mpi_c = pt.empty((shape[0], 3, shape[2], shape[3]), device='cuda:0').uniform_(-1, 1)
     self.mpi_c = nn.Parameter(mpi_c)
     self.specular = Basis(shape, args.basis_out * 3).cuda()
+    self.MLP = SirenMLP if (args.MLP=="siren") else VanillaMLP
     self.seq1 = nn.DataParallel(
-      SirenMLP(
-        args.mlp, #默认：4
-        args.hidden, #默认：384
+      self.MLP(
+        args.hidden_layer, #默认：6
+        args.hidden_node, #默认：384
         args.pos_level, #默认：10
         args.depth_level, #默认： 8
         args.lrelu_slope,
@@ -316,8 +317,8 @@ class Network(nn.Module):
     print('All combined layers: {}'.format(args.layers * args.sublayers))
     print(self.planes)
     print('Using inverse depth: {}, Min depth: {}, Max depth: {}'.format(sfm.invz == 1, self.planes[0],self.planes[-1]))
-    print('Layer of MLP: {}'.format(args.mlp + 2))
-    print('Hidden Channel of MLP: {}'.format(args.hidden))
+    print('Layer of MLP: {}'.format(args.hidden_layer + 2))
+    print('Hidden Channel of MLP: {}'.format(args.hidden_node))
     print('Main Network',self.seq1)
 
 
@@ -579,11 +580,9 @@ def train():
 
   step = start_epoch * len(sampler_train)
 
-  if args.epochs < 0 and args.steps < 0:
+  if args.epochs < 0:
     raise Exception("Need to specify epochs or steps")
 
-  if args.epochs < 0:
-    args.epochs = int(np.ceil(args.steps / len(sampler_train)))
 
   if args.predict:
     generateAlpha(model, dataset, dataloader_val, None, runpath, dataloader_train = dataloader_train)
@@ -660,7 +659,7 @@ def train():
 
       step += 1
       toc_msg = ts.toc(step, loss_total.item())
-      if step % args.tb_toc == 0:  print(toc_msg)
+      if step % args.vstep == 0:  print(toc_msg)
       ts.tic()
 
     writer.add_scalar('loss/total', epoch_loss_total/len(sampler_train), epoch)

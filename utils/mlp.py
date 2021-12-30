@@ -18,7 +18,7 @@ class VanillaMLP(nn.Module):
         super().__init__()
         self.activation = nn.LeakyReLU(lrelu_slope)
 
-        ls = [nn.Linear(pos_level * 2 * 2 + depth_level * 2, hidden, is_first=True)]
+        ls = [nn.Linear(pos_level * 2 * 2 + depth_level * 2, hidden)]
         ls.append(self.activation)
         for i in range(mlp):
             ls.append(nn.Linear(hidden, hidden))
