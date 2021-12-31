@@ -4,7 +4,6 @@ import scipy, scipy.misc, scipy.signal
 import cv2
 import os
 import argparse
-from skimage.transform import resize
 
 def computeTextureWeights(fin, sigma, sharpness):
     dt0_v = np.vstack((np.diff(fin, n=1, axis=0), fin[0, :] - fin[-1, :]))
@@ -163,8 +162,8 @@ def imageEnhancement(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-image_dir', type=str, default="./images/", help='directory to the images')
-    parser.add_argument('-out_dir', type=str, default="./improved_images/", help='directory to the output images')
-    parser.add_argument('-resize', type=int, default=100, help='resize images to x% of original size')
+    parser.add_argument('-image_dir', type=str, default="./data/original_images/", help='directory to the images')
+    parser.add_argument('-out_dir', type=str, default="./data/images/", help='directory to the output images')
+    parser.add_argument('-resize', type=int, default=25, help='resize images to x% of original size')
     args = parser.parse_args()
     imageEnhancement(args)
