@@ -3,26 +3,29 @@
 # fps=reader.get_meta_data()['fps']
 # imageio.mimsave("C:\\Users\\HUAWEI\\Desktop\\video_outx4.gif", reader, fps=15)
 
-# import imageio
-# import os
-#
-# def create_gif(img_dir, image_list, gif_name, duration=0.05):
-#     frames = []
-#     for image_name in image_list:
-#         print("image_name={0} img_dir={1}".format(image_name, img_dir))
-#         frames.append(imageio.imread(img_dir + '/'+ image_name))
-#     imageio.mimsave(gif_name, frames, 'GIF', duration=duration)
-#     return
-#
-# def main():
-#     img_dir = './image_dir'
-#     duration = 0.05 # 每秒20帧
-#     image_list = os.listdir(img_dir + '/')
-#     gif_name = img_dir+'.gif'
-#     create_gif(img_dir, image_list, gif_name, duration)
-#
-# if __name__ == '__main__':
-#     main()
+import imageio
+import os
+
+def create_gif_and_mp4(img_dir, fps=20.0):
+    duration = 1 / fps
+    image_list = os.listdir(img_dir + '/')
+    frames = []
+    for image_name in image_list:
+        type = image_name.split('.')
+        if(type[-1]=="jpg" or type[-1]=="png"):
+            # print("image_name={0} img_dir={1}".format(image_name, img_dir))
+            frames.append(imageio.imread(img_dir + '/'+ image_name))
+    imageio.mimsave(os.path.join(img_dir,"out.gif"), frames, 'GIF', duration=duration)
+    reader = imageio.get_reader(os.path.join(img_dir,"out.gif"))
+    imageio.mimsave(os.path.join(img_dir,"out.mp4"), reader, fps=fps)
+    return
+
+def main():
+    img_dir = './data/images/'
+    create_gif_and_mp4(img_dir=img_dir, fps=10.0)
+
+if __name__ == '__main__':
+    main()
 #
 # import cv2
 # from PIL import ImageEnhance, Image
@@ -76,55 +79,55 @@
 # cap.release()
 # cv2.destroyAllWindows()
 
-import math
-import numpy as np
-
-import torch.nn.functional as F
-import torch.nn as nn
-import torch
-# torch.autograd.set_detect_anomaly(True)
-
-# SIREN NeRF definitions
-
-
-class Sine(nn.Module):
-    def __init__(self, w0=30.):
-        super().__init__()
-        self.w0 = w0
-
-    def forward(self, x):
-        return torch.sin(self.w0 * x)
-
-
-class SirenLayer(nn.Module):
-    def __init__(self, input_dim, hidden_dim, use_bias=True, w0=1., is_first=False):
-        super().__init__()
-        self.layer = nn.Linear(input_dim, hidden_dim, bias=use_bias)
-        self.activation = Sine(w0)
-        self.is_first = is_first
-        self.input_dim = input_dim
-        self.w0 = w0
-        self.c = 6
-        self.reset_parameters()
-
-    def reset_parameters(self):
-        with torch.no_grad():
-            dim = self.input_dim
-            w_std = (1 / dim) if self.is_first else (math.sqrt(self.c / dim) / self.w0)
-            self.layer.weight.uniform_(-w_std, w_std)
-            if self.layer.bias is not None:
-                self.layer.bias.uniform_(-w_std, w_std)
-
-    def forward(self, x):
-        out = self.layer(x)
-        out = self.activation(out)
-        return out
-
-if __name__ == "__main__":
-    layer = SirenLayer(128, 111)
-    x = torch.randn([7, 8, 128])
-    y = layer(x)
-    print(x)
-    print(y)
-    print(x.shape)
-    print(y.shape)
+# import math
+# import numpy as np
+#
+# import torch.nn.functional as F
+# import torch.nn as nn
+# import torch
+# # torch.autograd.set_detect_anomaly(True)
+#
+# # SIREN NeRF definitions
+#
+#
+# class Sine(nn.Module):
+#     def __init__(self, w0=30.):
+#         super().__init__()
+#         self.w0 = w0
+#
+#     def forward(self, x):
+#         return torch.sin(self.w0 * x)
+#
+#
+# class SirenLayer(nn.Module):
+#     def __init__(self, input_dim, hidden_dim, use_bias=True, w0=1., is_first=False):
+#         super().__init__()
+#         self.layer = nn.Linear(input_dim, hidden_dim, bias=use_bias)
+#         self.activation = Sine(w0)
+#         self.is_first = is_first
+#         self.input_dim = input_dim
+#         self.w0 = w0
+#         self.c = 6
+#         self.reset_parameters()
+#
+#     def reset_parameters(self):
+#         with torch.no_grad():
+#             dim = self.input_dim
+#             w_std = (1 / dim) if self.is_first else (math.sqrt(self.c / dim) / self.w0)
+#             self.layer.weight.uniform_(-w_std, w_std)
+#             if self.layer.bias is not None:
+#                 self.layer.bias.uniform_(-w_std, w_std)
+#
+#     def forward(self, x):
+#         out = self.layer(x)
+#         out = self.activation(out)
+#         return out
+#
+# if __name__ == "__main__":
+#     layer = SirenLayer(128, 111)
+#     x = torch.randn([7, 8, 128])
+#     y = layer(x)
+#     print(x)
+#     print(y)
+#     print(x.shape)
+#     print(y.shape)

@@ -22,12 +22,27 @@ from skimage.metrics import structural_similarity, peak_signal_noise_ratio
 from skimage.transform import resize
 import cv2
 import lpips
+import  imageio
 import pandas as pd
 import shutil
 
+
+def create_gif_and_mp4(img_dir, fps=20.0):
+  duration = 1 / fps
+  image_list = os.listdir(img_dir + '/')
+  frames = []
+  for image_name in image_list:
+    type = image_name.split('.')
+    if (type[-1] == "jpg" or type[-1] == "png"):
+      # print("image_name={0} img_dir={1}".format(image_name, img_dir))
+      frames.append(imageio.imread(img_dir + '/' + image_name))
+  imageio.mimsave(os.path.join(img_dir, "out.gif"), frames, 'GIF', duration=duration)
+  reader = imageio.get_reader(os.path.join(img_dir, "out.gif"))
+  imageio.mimsave(os.path.join(img_dir, "out.mp4"), reader, fps=fps)
+  return
+
 class OrbiterDataset(Dataset):
-  def __init__(self, dataset, ref_img, scale, dmin,
-      dmax, invz, transform=None,
+  def __init__(self, dataset, ref_img, scale, dmin, dmax, invz, transform=None,
       render_style='', offset=200, cv2resize=False):
     self.scale = scale
     self.dataset = dataset
@@ -222,7 +237,7 @@ def outputCompactMPI(mpi_reflection, sfm, planes, model_dir_nolp, layers, sublay
   maxcol = int(web_width / mpi_reflection['mpi_c'].shape[-1])
 
   #mpi_c [layers, 3, h, w]
-  #mpi_a [layer * sublayers, 1, h, w]
+  #mpi_a [layers * sublayers, 1, h, w]
   #mpi_v [layers, 3, h, w, 8]
   #mpi_b [num_basis, 1, 400, 400]
   if not os.path.exists(webpath + outputFile) or True:
@@ -349,7 +364,8 @@ def render_video(model, dataset, ray, video_path = 'runs/video/', render_type='d
     print('frame_{:04d}.png ({:d}/{:d})'.format(pose_id, pose_id+1, total_frame))
     io.imsave(filepath, (predict_image * 255).astype(np.uint8))
   if shutil.which('ffmpeg') is None:
-    print("Skiping create video, No FFmpeg install on this PC.")
+    create_gif_and_mp4(img_dir=video_path, fps=10)
+    # print("Skiping create video, No FFmpeg install on this PC.")
     return
   video_filepath = os.path.join(video_path,'video.mp4')
   if os.path.exists(video_filepath):

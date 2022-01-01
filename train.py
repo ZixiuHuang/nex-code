@@ -614,33 +614,37 @@ def train():
   ts.tic()
 
    # shift by 1 epoch to save last epoch to tensorboard
+  # 训练过程
   for epoch in range(start_epoch, args.epochs+1):
     epoch_loss_total = 0
     epoch_mse = 0
 
     model.train()
-
+    # batch_size = 1
     for i, feature in enumerate(dataloader_train):
-      #print("step: {}".format(i))
       setLearningRate(optimizer, epoch)
       optimizer.zero_grad()
 
       output_shape = feature['image'].shape[-2:]
 
       #sample L-shaped rays
+      #采样像素点
       sel = Lsel(output_shape, args.ray)
 
 
       gt = feature['image']
       gt = gt.view(gt.shape[0], gt.shape[1], gt.shape[2] * gt.shape[3])
       gt = gt[:, :, sel, None].cuda()
+
+      #正向传播
       output = model(dataset.sfm, feature, output_shape, sel)
 
+      #计算损失
       mse = pt.mean((output - gt) ** 2)
 
       loss_total = mse
 
-      #tvc regularizer
+      #正则化项
       tvc = args.tvc * pt.mean(totalVariation(pt.sigmoid(model.mpi_c[:, :3])))
       loss_total = loss_total + tvc
 
@@ -654,6 +658,7 @@ def train():
       epoch_loss_total += loss_total
       epoch_mse += mse
 
+      #反向传播
       loss_total.backward()
       optimizer.step()
 
