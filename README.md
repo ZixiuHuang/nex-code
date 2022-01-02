@@ -1,117 +1,117 @@
-# NeX: Real-time View Synthesis with Neural Basis Expansion
+# 简要介绍
 
-### [Project Page](https://nex-mpi.github.io/) | [Video](https://www.youtube.com/watch?v=HyfkF7Z-ddA) | [Paper](https://arxiv.org/pdf/2103.05606.pdf) | [COLAB](https://colab.research.google.com/drive/1hXVvYdAwLA0EFg2zrafJUE0bFgB_F7PU#scrollTo=TFbN4mrJCp8o&sandboxMode=true) | [Shiny Dataset](https://vistec-my.sharepoint.com/:f:/g/personal/pakkapon_p_s19_vistec_ac_th/EnIUhsRVJOdNsZ_4smdhye0B8z0VlxqOR35IR3bp0uGupQ?e=TsaQgM)
+## 1. 实验环境
 
-[![Open NeX in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1hXVvYdAwLA0EFg2zrafJUE0bFgB_F7PU#scrollTo=TFbN4mrJCp8o&sandboxMode=true)
+* Ubuntu 18.04
 
-[![NeX](https://i.imgur.com/TfXtYdC.png)](https://www.youtube.com/watch?v=HyfkF7Z-ddA)
+* CUDA 11.0
+* GPU：Tesla V100-PCIE-32GB
 
-We present NeX, a new approach to novel view synthesis based on enhancements of multiplane image (MPI) that can reproduce NeXt-level view-dependent effects---in real time. Unlike traditional MPI that uses a set of simple RGBα planes, our technique models view-dependent effects by instead parameterizing each pixel as a linear combination of basis functions learned from a neural network. Moreover, we propose a hybrid implicit-explicit modeling strategy that improves upon fine detail and produces state-of-the-art results. Our method is evaluated on benchmark forward-facing datasets as well as our newly-introduced dataset designed to test the limit of view-dependent modeling with significantly more challenging effects such as the rainbow reflections on a CD. Our method achieves the best overall scores across all major metrics on these datasets with more than 1000× faster rendering time than the state of the art.
-## Table of contents
------
-  * [TL;DR](#Getting-started)
-  * [Installation](#Installation)
-  * [Dataset](#Dataset)
-  * [Training](#Training)
-  * [Rendering](#Rendering)
-  * [Citation](#citation)
-------
+## 2. 开发工具
 
-## Getting started
+* 语言：python
+* 依赖库：PyTorch、OpenCV（版本详见requirements.txt）
+* COLMAP（运行SfM算法）
 
-```shell
-conda env create -f environment.yml
-./download_demo_data.sh
-conda activate nex
-python train.py -scene data/crest_demo -model_dir crest -http
-tensorboard --logdir runs/
-```
+## 3. 参考论文
 
-## Installation
-We provide `environment.yml` to help you setup a conda environment. 
+1. [A New Image Contrast Enhancement Algorithm using Exposure Fusion Framework](https://baidut.github.io/OpenCE/caip2017.html)
+2. [NeX: Real-time View Synthesis with Neural Basis Expansion](https://nex-mpi.github.io/)
+
+## 4. 流程概览
+
+
+
+## 5. 运行步骤
+
+### 5.1 图像对比度增强、resize
 
 ```shell
-conda env create -f environment.yml
+$python image_enhancement.py \
+	-image_dir ./data/original_images/ #输入图像文件路径
+	-out_dir ./data/images/			 #输出图像文件路径
+	-resize 25 #缩放比例
 ```
 
-## Dataset
-### Shiny dataset
+> 经过增强处理、resize至1000×750的数据集已保存在./data/images/中
 
-**Download:**  [Shiny dataset](https://vistec-my.sharepoint.com/:f:/g/personal/pakkapon_p_s19_vistec_ac_th/EnIUhsRVJOdNsZ_4smdhye0B8z0VlxqOR35IR3bp0uGupQ?e=TsaQgM). 
+### 5.2 COLMAP三维重建
 
-We provide 2 directories named `shiny` and `shiny_extended`. 
-- `shiny` contains benchmark scenes used to report the scores in our paper.
-- `shiny_extended` contains additional challenging scenes used on our website [project page](https://nex-mpi.github.io/) and [video](https://www.youtube.com/watch?v=HyfkF7Z-ddA)
+COLMAP 安装
 
-
-### NeRF's  real forward-facing dataset
-**Download:** [Undistorted front facing dataset](https://vistec-my.sharepoint.com/:f:/g/personal/pakkapon_p_s19_vistec_ac_th/ErjPRRL9JnFIp8MN6d1jEuoB3XVoxJkffPjfoPyhHkj0dg?e=qIunN0)
-
-For real forward-facing dataset, NeRF is trained with the raw images, which may contain lens distortion. But we use the undistorted images provided by COLMAP.
-
-However, you can try running other scenes from [Local lightfield fusion](https://github.com/Fyusion/LLFF) (Eg. [airplant](https://github.com/Fyusion/LLFF/blob/master/imgs/viewer.gif)) without any changes in the dataset files. In this case, the images are not automatically undistorted.
-
-### Deepview's spaces dataset
-**Download:** [Modified spaces dataset](https://vistec-my.sharepoint.com/:f:/g/personal/pakkapon_p_s19_vistec_ac_th/Euiqlm45zFlItB7eJToHFUUBrIpWH3ehbyUUvpLAL5ulgg?e=Oh0JYN)
-
-We slightly modified the file structure of Spaces dataset in order to determine the plane placement and split train/test sets. 
-
-### Using your own images.
-
-Running NeX on your own images. You need to install [COLMAP](https://colmap.github.io/) on your machine.
-
-Then, put your images into a directory following this structure
-```
-<scene_name>
-|-- images
-     | -- image_name1.jpg
-     | -- image_name2.jpg
-     ...
-```
-
-The training code will automatically prepare a scene for you. You may have to tune `planes.txt` to get better reconstruction (see [dataset explaination](https://vistec-my.sharepoint.com/:t:/g/personal/pakkapon_p_s19_vistec_ac_th/EYBtE-X95pFLscoLFehUMtQBjrrYKQ9mxVEzKzNlDuoZLw?e=bODHZ4))
-
-
-## Training
-
-Run with the paper's config
 ```shell
-python train.py -scene ${PATH_TO_SCENE} -model_dir ${MODEL_TO_SAVE_CHECKPOINT} -http
+$apt install colmap
 ```
 
-This implementation uses [scikit-image](https://scikit-image.org/) to resize images during training by default. The results and scores in the paper are generated using OpenCV's resize function. If you want the same behavior, please add `-cv2resize` argument.
+COLMAP运行SfM算法
 
-Note that this code is tested on an Nvidia V100 32GB and 4x RTX 2080Ti GPU.
-
-For a GPU/GPUs with less memory (e.g., a single RTX 2080Ti), you can run using the following command:
 ```shell
-python train.py -scene ${PATH_TO_SCENE} -model_dir ${MODEL_TO_SAVE_CHECKPOINT} -http -layers 12 -sublayers 6 -hidden 256
+# 特征提取
+$colmap feature_extractor \
+	--database_path data/database.db \
+	--image_path data/images \
+	--ImageReader.single_camera 1 \
+	--ImageReader.camera_model SIMPLE_PINHOLE \
+	--SiftExtraction.use_gpu=false 
+
+#特征匹配
+$colmap exhaustive_matcher \
+	--database_path data/database.db  \
+	--SiftMatching.use_gpu=false
+
+#相机位姿求解与优化
+$colmap mapper \
+	--database_path data/database.db \
+	--image_path data/images \
+	--Mapper.ba_refine_principal_point 1 
+	--Mapper.num_threads 2 \
+	--Mapper.extract_colors 0 \
+	--export_path data/sparse
+
+#图像畸变矫正
+$colmap image_undistorter \
+	--image_path data/images \
+	--input_path data/sparse/0 \
+	--output_path data/dense \
+	--output_type COLMAP
 ```
-Note that when your GPU runs ouut of memeory, you can try reducing the number of layers, sublayers, and sampled rays.
 
-## Rendering
+> 经过SfM处理生成的相机参数、稀疏点云已保存在./data/目录下
 
-To generate a WebGL viewer and a video result.
+### 5.3 NeX训练
+
 ```shell
-python train.py -scene ${scene} -model_dir ${MODEL_TO_SAVE_CHECKPOINT} -predict -http
+!python train.py \
+       	   -scene data/ \ #文件路径（包含图片、重建后的相机参数、稀疏点云）
+	     -model_dir module/ \ #模型的保存路径
+	     -epoch 4000 \   
+	     -checkpoint 500 \ #每500epoch保存checkpoint
+	     -vstep 50 \ #每50epoch输出训练进度
+	     -ray 8000 \ #采样数
+	     -hidden_layer 4 \	#第一个MLP的隐藏层数量
+	     -hidden_node 384 \	#每层结点数
+	     -mlp_type relu \	#激活函数：relu 或 siren
+	     -basis_hidden_layer 1 \ #第二个MLP的隐藏层数
+	     -basis_hidden_node 64 \	#第二个MLP的每层结点数
+            -layers 16 \ #MPI模块层数
+            -sublayers 12 \ #MPI模块内包含的层数，即总MPI层数=layers*sublayers
+	     -num_worker 4 \ #读取数据的线程数
+       	   # -pretrained module_1k/ #预训练模型路径
 ```
 
-### Video rendering
-
-To generate a video that matches the real forward-facing rendering path, add `-nice_llff` argument, or `-nice_shiny` for shiny dataset
 
 
 
-## Citation
 
-```
-@inproceedings{Wizadwongsa2021NeX,
-    author = {Wizadwongsa, Suttisak and Phongthawee, Pakkapon and Yenphraphai, Jiraphon and Suwajanakorn, Supasorn},
-    title = {NeX: Real-time View Synthesis with Neural Basis Expansion},
-    booktitle = {IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}, 
-    year = {2021},
-}
-```
 
-## Visit us 🦉
-[![Vision & Learning Laboratory](https://i.imgur.com/hQhkKhG.png)](https://vistec.ist/vision) [![VISTEC - Vidyasirimedhi Institute of Science and Technology](https://i.imgur.com/4wh8HQd.png)](https://vistec.ist/)
+
+
+
+
+
+
+
+
+
+
+

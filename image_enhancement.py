@@ -112,7 +112,7 @@ def maxEntropyEnhance(I, isBad, a=-0.3293, b=1.1258):
     return J
 
 
-def CAIP(img, mu=0.5, a=-0.3293, b=1.1258):
+def contrastEnhancement(img, mu=0.5, a=-0.3293, b=1.1258):
     lamda = 0.5
     sigma = 5
 
@@ -149,7 +149,7 @@ def imageEnhancement(args):
             img = imageio.imread(img_path)
             print("improving " + file_name + "...")
             # 图片增强
-            img = CAIP(img)
+            img = contrastEnhancement(img)
             # 图片resize
             if args.resize > 0 and args.resize <100:
                 scale_percent = args.resize
